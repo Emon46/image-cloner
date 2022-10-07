@@ -71,6 +71,11 @@ spec:
         args:
         - --leader-elect
         image: hremon331046/image-cloner:latest
+        env:
+          - name: RegistrySecretName
+            value: image-cloner-cred
+          - name: RegistrySecretNameSpace
+            value: demo
         imagePullPolicy: IfNotPresent
         name: manager
         securityContext:
