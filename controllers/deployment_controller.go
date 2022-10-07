@@ -25,6 +25,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	clientutil "kmodules.xyz/client-go/client"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -51,13 +52,38 @@ type DeploymentReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.13.0/pkg/reconcile
 func (r *DeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := r.Log.WithValues("deployment", req.NamespacedName)
-	logger.Info(fmt.Sprintf("**************** hello from deployment reconciler %s ****************", req.String()))
 
-	username, password, err := getRegistryAuthCred(ctx, r.Client)
+	logger.Info(fmt.Sprintf("**************** hello from deployment reconciler %s ****************", req.String()))
+	if !IncludedNamespace(req.Namespace) {
+		logger.Info(fmt.Sprintf("drop the key %s as excluded namespace", req.String()))
+		return ctrl.Result{}, nil
+	}
+
+	// Getting the Deployment Object
+	deployment := &appsv1.Deployment{}
+	if err := r.Get(ctx, req.NamespacedName, deployment); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	containers, err := pushContainersToBackupRegistry(ctx, r.Client, deployment.Spec.Template.Spec.Containers)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	fmt.Println("successfully get the auth secret")
+
+	initContainers, err := pushContainersToBackupRegistry(ctx, r.Client, deployment.Spec.Template.Spec.InitContainers)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	_, _, err = clientutil.CreateOrPatch(ctx, r.Client, deployment, func(obj client.Object, createOp bool) client.Object {
+		in := obj.(*appsv1.Deployment)
+		in.Spec.Template.Spec.Containers = containers
+		in.Spec.Template.Spec.InitContainers = initContainers
+		return in
+	})
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 	return ctrl.Result{}, nil
 }
 

@@ -12,11 +12,11 @@ import (
 	"strings"
 )
 
-func getRegistryAuthCred(ctx context.Context, kubeClient client.Client) (string, string, error) {
+func getRegistryAuthCred(ctx context.Context, kubeClient client.Client) (string, string, string, error) {
 	secretName := os.Getenv("RegistrySecretName")
 	secretNamespace := os.Getenv("RegistrySecretNameSpace")
 	if secretName == "" || secretNamespace == "" {
-		return "", "", fmt.Errorf("set Env key \"RegistrySecretName\" and \"RegistrySecretNameSpace\" inside controller container")
+		return "", "", "", fmt.Errorf("set Env key \"RegistrySecretName\" and \"RegistrySecretNameSpace\" inside controller container")
 	}
 
 	secret := &v1.Secret{}
@@ -28,26 +28,29 @@ func getRegistryAuthCred(ctx context.Context, kubeClient client.Client) (string,
 	if err != nil {
 		if errors.IsNotFound(err) {
 			klog.Infoln(fmt.Sprintf("secret %s not exist", objMeta.String()))
-			return "", "", err
+			return "", "", "", err
 		}
-		return "", "", err
+		return "", "", "", err
 	}
 
 	return validateAndGetRegistryAuthCred(secret)
 }
 
-func validateAndGetRegistryAuthCred(secret *v1.Secret) (string, string, error) {
+func validateAndGetRegistryAuthCred(secret *v1.Secret) (string, string, string, error) {
 	authByte, ok := secret.Data["auth"]
 	if !ok {
-		return "", "", fmt.Errorf("\"auth\" key field not exist inside secret")
+		return "", "", "", fmt.Errorf("\"auth\" key field not exist inside secret")
 	}
 
 	authSlice := strings.Split(string(authByte), ":")
 	if len(authSlice) != 2 {
-		return "", "", fmt.Errorf(fmt.Sprintf("assigned invalid value to auth key inside %s secret", secret.String()))
+		return "", "", "", fmt.Errorf(fmt.Sprintf("assigned invalid value to auth key inside %s secret", secret.String()))
 	}
-
+	registryHost := ""
+	if _, ok := secret.Data["RegistryHost"]; ok {
+		registryHost = string(secret.Data["RegistryHost"])
+	}
 	username := authSlice[0]
 	password := authSlice[1]
-	return username, password, nil
+	return username, password, registryHost, nil
 }

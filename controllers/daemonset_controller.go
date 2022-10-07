@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-logr/logr"
+	clientutil "kmodules.xyz/client-go/client"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	meta_util "kmodules.xyz/client-go/meta"
@@ -55,6 +56,36 @@ func (r *DaemonSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	logger := r.Log.WithValues("daemonset", req.NamespacedName)
 	logger.Info(fmt.Sprintf("**************** hello from daemonset reconciler  %s ****************", req.String()))
 
+	if !IncludedNamespace(req.Namespace) {
+		logger.Info(fmt.Sprintf("drop the key %s as excluded namespace", req.String()))
+		return ctrl.Result{}, nil
+	}
+
+	// Getting the DaemonSet Object
+	daemonSet := &appsv1.DaemonSet{}
+	if err := r.Get(ctx, req.NamespacedName, daemonSet); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	containers, err := pushContainersToBackupRegistry(ctx, r.Client, daemonSet.Spec.Template.Spec.Containers)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	initContainers, err := pushContainersToBackupRegistry(ctx, r.Client, daemonSet.Spec.Template.Spec.InitContainers)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	_, _, err = clientutil.CreateOrPatch(ctx, r.Client, daemonSet, func(obj client.Object, createOp bool) client.Object {
+		in := obj.(*appsv1.DaemonSet)
+		in.Spec.Template.Spec.Containers = containers
+		in.Spec.Template.Spec.InitContainers = initContainers
+		return in
+	})
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 	return ctrl.Result{}, nil
 }
 
