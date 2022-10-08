@@ -23,8 +23,6 @@ import (
 	clientutil "kmodules.xyz/client-go/client"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	meta_util "kmodules.xyz/client-go/meta"
-
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -38,10 +36,10 @@ type DaemonSetReconciler struct {
 	Log    logr.Logger
 }
 
-//+kubebuilder:rbac:groups=apps,resources=daemonsets,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=apps,resources=daemonsets,verbs=get;list;watch;create;update;patch
 //+kubebuilder:rbac:groups=apps,resources=daemonsets/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=apps,resources=daemonsets/finalizers,verbs=update
-//+kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list
+//+kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -54,8 +52,8 @@ type DaemonSetReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.13.0/pkg/reconcile
 func (r *DaemonSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := r.Log.WithValues("daemonset", req.NamespacedName)
-	logger.Info(fmt.Sprintf("**************** hello from daemonset reconciler  %s ****************", req.String()))
 
+	// Ignore if Namepsace is equal to "Kube-system"
 	if !IncludedNamespace(req.Namespace) {
 		logger.Info(fmt.Sprintf("drop the key %s as excluded namespace", req.String()))
 		return ctrl.Result{}, nil
@@ -92,8 +90,9 @@ func (r *DaemonSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 // SetupWithManager sets up the controller with the Manager.
 func (r *DaemonSetReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&appsv1.DaemonSet{}).WithEventFilter(predicate.NewPredicateFuncs(func(obj client.Object) bool {
-		return IncludedNamespace(obj.GetNamespace()) && !meta_util.MustAlreadyReconciled(obj)
-	})).
+		For(&appsv1.DaemonSet{}).
+		WithEventFilter(predicate.NewPredicateFuncs(func(obj client.Object) bool {
+			return IncludedNamespace(obj.GetNamespace())
+		})).
 		Complete(r)
 }

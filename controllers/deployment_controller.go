@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-logr/logr"
-	meta_util "kmodules.xyz/client-go/meta"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -37,9 +36,11 @@ type DeploymentReconciler struct {
 	Log    logr.Logger
 }
 
-//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch
 //+kubebuilder:rbac:groups=apps,resources=deployments/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=apps,resources=deployments/finalizers,verbs=update
+//+kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch
+//+kubebuilder:rbac:groups=core,resources=events,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -54,6 +55,8 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	logger := r.Log.WithValues("deployment", req.NamespacedName)
 
 	logger.Info(fmt.Sprintf("**************** hello from deployment reconciler %s ****************", req.String()))
+	// Ignore if Namepsace is equal to "Kube-system"
+
 	if !IncludedNamespace(req.Namespace) {
 		logger.Info(fmt.Sprintf("drop the key %s as excluded namespace", req.String()))
 		return ctrl.Result{}, nil
@@ -90,8 +93,10 @@ func (r *DeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 // SetupWithManager sets up the controller with the Manager.
 func (r *DeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&appsv1.Deployment{}).WithEventFilter(predicate.NewPredicateFuncs(func(obj client.Object) bool {
-		return IncludedNamespace(obj.GetNamespace()) && !meta_util.MustAlreadyReconciled(obj)
-	})).
+		For(&appsv1.Deployment{}).
+		WithEventFilter(predicate.NewPredicateFuncs(func(obj client.Object) bool {
+			return IncludedNamespace(obj.GetNamespace())
+			//return IncludedNamespace(obj.GetNamespace()) && !meta_util.MustAlreadyReconciled(obj)
+		})).
 		Complete(r)
 }

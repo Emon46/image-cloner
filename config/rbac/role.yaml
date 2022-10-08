@@ -11,7 +11,6 @@ rules:
   - daemonsets
   verbs:
   - create
-  - delete
   - get
   - list
   - patch
@@ -37,7 +36,6 @@ rules:
   - deployments
   verbs:
   - create
-  - delete
   - get
   - list
   - patch
@@ -60,7 +58,20 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - events
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
   - secrets
   verbs:
   - get
   - list
+  - watch
