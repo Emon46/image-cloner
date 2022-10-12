@@ -27,7 +27,7 @@ func isBackupRegistry(imageName, registry string) bool {
 }
 
 func pushContainersToBackupRegistry(ctx context.Context, kubeClient client.Client, containers []v1.Container) ([]v1.Container, error) {
-	authConfig, registryHost, err := getAuthConfigForRegistry(ctx, kubeClient)
+	authConfig, registryHost, err := newAuthConfigForRegistry(ctx, kubeClient)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func pushContainersToBackupRegistry(ctx context.Context, kubeClient client.Clien
 	return containers, nil
 }
 
-func getAuthConfigForRegistry(ctx context.Context, kubeClient client.Client) (authn.AuthConfig, string, error) {
+func newAuthConfigForRegistry(ctx context.Context, kubeClient client.Client) (authn.AuthConfig, string, error) {
 	username, password, registryHost, err := getRegistryAuthCred(ctx, kubeClient)
 	if err != nil {
 		return authn.AuthConfig{}, registryHost, err
