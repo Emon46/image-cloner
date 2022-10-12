@@ -1,6 +1,6 @@
 module github.com/Emon46/image-cloner
 
-go 1.18
+go 1.19
 
 require (
 	github.com/go-logr/logr v1.2.3
@@ -35,7 +35,6 @@ require (
 	github.com/docker/docker v20.10.17+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.6.4 // indirect
 	github.com/emicklei/go-restful/v3 v3.8.0 // indirect
-	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/go-logr/zapr v1.2.3 // indirect
