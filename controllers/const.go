@@ -1,6 +1,8 @@
 package controllers
 
 const (
-	ExcludedNameSpace      = "kube-system"
-	ExcludedNamespaceError = "namespace is Excluded from controller"
+	ExcludedNameSpace       = "kube-system"
+	RegistrySecretName      = "RegistrySecretName"
+	RegistrySecretNamespace = "RegistrySecretNameSpace"
+	RegistryHostName        = "RegistryHost"
 )
