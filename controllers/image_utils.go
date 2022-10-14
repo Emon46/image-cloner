@@ -54,7 +54,7 @@ func pushContainersToBackupRegistry(ctx context.Context, kubeClient client.Clien
 		if err != nil {
 			return nil, err
 		}
-		klog.Infoln(fmt.Sprintf("successfully pushed the docker image: %s to as %s", container.Image, backupRegistryImageName))
+		klog.Infoln(fmt.Sprintf("successfully pushed the docker image: %s to backup registry as %s", container.Image, backupRegistryImageName))
 
 		// ISSUE: crane.Copy() will not work if the original image is from one hub like: (gcr, docker) and backup image is pushing in other hub like: (gcr, docker)
 		// we are passing only one auth but they are trying to use the same auth in both pull and push
@@ -65,11 +65,13 @@ func pushContainersToBackupRegistry(ctx context.Context, kubeClient client.Clien
 		//	return nil, err
 		//}
 
+		// update the docker image with the backup registry image
 		containers[index].Image = backupRegistryImageName
 	}
 	return containers, nil
 }
 
+// get the auth config from registry cred
 func newAuthConfigForRegistry(ctx context.Context, kubeClient client.Client) (authn.AuthConfig, string, error) {
 	username, password, registryHost, err := getRegistryAuthCred(ctx, kubeClient)
 	if err != nil {

@@ -75,6 +75,7 @@ func (r *DaemonSetReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
+	// use the contaners from backup registry
 	_, _, err = clientutil.CreateOrPatch(ctx, r.Client, daemonSet, func(obj client.Object, createOp bool) client.Object {
 		in := obj.(*appsv1.DaemonSet)
 		in.Spec.Template.Spec.Containers = containers

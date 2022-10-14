@@ -54,7 +54,6 @@ type DeploymentReconciler struct {
 func (r *DeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := r.Log.WithValues("deployment", req.NamespacedName)
 
-	logger.Info(fmt.Sprintf("**************** hello from deployment reconciler %s ****************", req.String()))
 	// Ignore if Namepsace is equal to "Kube-system"
 
 	if !IncludedNamespace(req.Namespace) {
@@ -96,7 +95,6 @@ func (r *DeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&appsv1.Deployment{}).
 		WithEventFilter(predicate.NewPredicateFuncs(func(obj client.Object) bool {
 			return IncludedNamespace(obj.GetNamespace())
-			//return IncludedNamespace(obj.GetNamespace()) && !meta_util.MustAlreadyReconciled(obj)
 		})).
 		Complete(r)
 }

@@ -4,5 +4,5 @@ metadata:
   name: image-cloner-cred
   namespace: demo
 stringData:
-#  registryServer: https://hub.docker.com/
+#  RegistryHost: https://hub.docker.com/
   auth: <docker-username>:<password>

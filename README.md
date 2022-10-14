@@ -1,66 +1,51 @@
-# image-cloner
+# Image-cloner
 This is a k8s controller which will watch for Deployment and Daemonset pods and store the image by re-uploading to a bakcup registry from public registry images.
 
 ## Getting Started
 You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
 **Note:** Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
 
-### Running on the cluster
-1. Install Instances of Custom Resources:
+### demo link
+- asciinema demo link [link](https://asciinema.org/a/528475)
 
+### Run Controller and Test it out
+- Apply docker credential `secret` in `config/sample/registry-cred.yaml` file. Before applying the `secret`, change the `stringData` key `auth` to right `<docker-username>` and `<password>` in `image-cloner-cred` secret.
+  - If you want to update the docker cred secret name and namespace then need to add the secret name and namespace in `ENV` of the deployment inside `./config/manager/manager.yaml` and update the  `RegistrySecretName` and `RegistrySecretNamespace`
 ```sh
-kubectl apply -f config/samples/
+kubectl apply -f config/sample/registry-cred.yaml
 ```
 
-2. Build and push your image to the location specified by `IMG`:
-	
+- Build and push your image to the location specified by `IMG`:
 ```sh
-make docker-build docker-push IMG=<some-registry>/image-cloner:tag
-```
-	
-3. Deploy the controller to the cluster with the image specified by `IMG`:
-
-```sh
-make deploy IMG=<some-registry>/image-cloner:tag
+export REGISTRY=<registry-name>
+make docker-push
 ```
 
-### Uninstall CRDs
-To delete the CRDs from the cluster:
-
+- Deploy the controller to the cluster with the image specified by `IMG`:
 ```sh
-make uninstall
+export REGISTRY=<registry-name>
+make deploy
 ```
+or,
+for deploying in kind
+```sh
+export REGISTRY=<registry-name>
+make deploy-to-kind
+```
+- check the pods are up and running: `kubectl get pod -n image-cloner-system`  
 
-### Undeploy controller
-UnDeploy the controller to the cluster:
+- apply sample deployment and daemonset
+```shell
+kubectl apply -f config/sample/demo-deployment.yaml
+kubectl apply -f config/sample/demo-daemonset.yaml
+```
+- now check in the sample deployment and daemonset images, they will be cloned & pushed to your backup docker registry and use new docker image in the deployment
+
+- UnDeploy the controller to the cluster:
 
 ```sh
 make undeploy
 ```
-
-## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
-
-### How it works
-This project aims to follow the Kubernetes [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
-
-It uses [Controllers](https://kubernetes.io/docs/concepts/architecture/controller/) 
-which provides a reconcile function responsible for synchronizing resources untile the desired state is reached on the cluster 
-
-### Test It Out
-1. Install the CRDs into the cluster:
-
-```sh
-make install
-```
-
-2. Run your controller (this will run in the foreground, so switch to a new terminal if you want to leave it running):
-
-```sh
-make run
-```
-
-**NOTE:** You can also run this in one step by running: `make install run`
 
 ### Modifying the API definitions
 If you are editing the API definitions, generate the manifests such as CRs or CRDs using:
@@ -69,9 +54,14 @@ If you are editing the API definitions, generate the manifests such as CRs or CR
 make manifests
 ```
 
-**NOTE:** Run `make --help` for more information on all potential `make` targets
+## Run e2e test
+- Added e2e test for deployment and Daemonset controller
+- For e2e test follow below steps:
+  - run the controller and create the `docker cred secret`
+  - run `ginkgo tests/e2e/`
 
-More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
+## Run unit test
+`make test`
 
 ## License
 
@@ -88,4 +78,3 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
