@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: image-cloner-cred
+  namespace: demo
+stringData:
+#  registryServer: https://hub.docker.com/
+  auth: <docker-username>:<password>

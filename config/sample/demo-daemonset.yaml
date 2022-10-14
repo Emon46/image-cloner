@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: demo-node-exporter
+  namespace: demo
+  labels:
+    k8s-app: node-exporter
+spec:
+  selector:
+    matchLabels:
+      name: node-exporter
+  template:
+    metadata:
+      labels:
+        name: node-exporter
+    spec:
+      containers:
+        - name: node-exporter
+          image: "prom/node-exporter"
+          ports:
+            - containerPort: 80
+
